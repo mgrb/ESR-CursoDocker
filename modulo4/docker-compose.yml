@@ -1,0 +1,41 @@
+version: '3'
+services:
+  web:
+    build: .
+    volumes:
+      - ".:/app"
+    working_dir: /app
+    ports:
+      - "5000:5000"
+    environment:
+      - "FLASK_ENV=development"
+      - "REDIS_HOST=redis"
+      - "REDIS_PORT=6379"
+  redis:
+    image: "redis:alpine"
+    volumes:
+      - "redis:/data"
+    command: ["redis-server", "--appendonly", "yes"]
+
+  nginx_syslog:
+    image: nginx:alpine
+    container_name: "nginx_syslog"
+    ports:
+      - 80:80
+    logging:
+      driver: syslog
+      options:
+        syslog-format: "rfc3164"
+        tag: "nginx_syslog"
+  nginx_graylog:
+    image: nginx:alpine
+    container_name: "nginx_graylog"
+    ports:
+      - 8080:80
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://127.0.0.1:12201"
+
+volumes:
+  redis:
